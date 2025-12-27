@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL for API calls
-const API_BASE_URL = 'http://localhost:8080/student-management/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/student-management/api';
 
 // Create axios instance with default configuration
 const api = axios.create({
