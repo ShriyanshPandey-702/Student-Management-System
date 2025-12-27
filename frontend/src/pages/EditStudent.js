@@ -25,6 +25,7 @@ const EditStudent = () => {
   // Fetch student data on component mount
   useEffect(() => {
     fetchStudent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   // Fetch student data by ID

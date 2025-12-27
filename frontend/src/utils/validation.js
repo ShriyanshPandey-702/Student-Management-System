@@ -4,7 +4,7 @@
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Phone validation regex (supports various formats)
-const PHONE_REGEX = /^[\+]?[1-9][\d]{0,15}$/;
+const PHONE_REGEX = /^[+]?[1-9][\d]{0,15}$/;
 
 // Validation functions
 export const validation = {
@@ -22,7 +22,7 @@ export const validation = {
   // Validate phone format
   phone: (value) => {
     if (!value) return true; // Allow empty if not required
-    return PHONE_REGEX.test(value.replace(/[\s\-\(\)]/g, ''));
+    return PHONE_REGEX.test(value.replace(/[\s\-()]/g, ''));
   },
 
   // Validate minimum length
