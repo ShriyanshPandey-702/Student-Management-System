@@ -1,42 +1,110 @@
 import axios from 'axios';
 
-// Base URL for API calls
-// For local: http://localhost:8080/student-management/api
-// For production: https://your-backend.onrender.com/student-management/api
+// ========================================
+// API Configuration
+// ========================================
+
+// Base URL for API calls - Use environment variable or fallback to localhost
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/student-management/api';
 
-// Create axios instance with default configuration
+// Log API URL in development (helps debugging)
+if (process.env.NODE_ENV === 'development') {
+  console.log('🔗 API Base URL:', API_BASE_URL);
+}
+
+// Create axios instance with production-ready configuration
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 30000, // 30 seconds (Render cold start can take time)
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  // Enable credentials for CORS
+  withCredentials: false,
 });
 
-// Add request interceptor to include auth token
+// ========================================
+// Request Interceptor
+// ========================================
 api.interceptors.request.use(
   (config) => {
+    // Add auth token if available
     const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Log requests in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📤 ${config.method.toUpperCase()} ${config.url}`);
+    }
+    
     return config;
   },
   (error) => {
+    console.error('❌ Request Error:', error);
     return Promise.reject(error);
   }
 );
 
-// Add response interceptor to handle errors
+// ========================================
+// Response Interceptor
+// ========================================
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userData');
-      window.location.href = '/login';
+  (response) => {
+    // Log successful responses in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url}`, response.status);
     }
+    return response;
+  },
+  (error) => {
+    // Handle different error types
+    if (error.response) {
+      // Server responded with error status
+      const status = error.response.status;
+      
+      if (status === 401) {
+        // Handle unauthorized access
+        console.warn('🔒 Unauthorized - Redirecting to login');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        localStorage.removeItem('studentData');
+        localStorage.removeItem('studentToken');
+        
+        // Redirect based on current path
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/student')) {
+          window.location.href = '/student/login';
+        } else {
+          window.location.href = '/login';
+        }
+      } else if (status === 403) {
+        console.error('🚫 Forbidden - Access denied');
+      } else if (status === 404) {
+        console.error('❓ Not Found - Resource does not exist');
+      } else if (status >= 500) {
+        console.error('🔥 Server Error - Please try again later');
+      }
+      
+      // Log error in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error(`❌ Response Error [${status}]:`, error.response.data);
+      }
+    } else if (error.request) {
+      // Request made but no response (network error, CORS, timeout)
+      console.error('🌐 Network Error - Cannot reach server');
+      console.error('Check if backend is running and CORS is configured correctly');
+      
+      if (error.code === 'ECONNABORTED') {
+        console.error('⏱️ Request Timeout - Server took too long to respond');
+      }
+    } else {
+      // Something else happened
+      console.error('⚠️ Error:', error.message);
+    }
+    
     return Promise.reject(error);
   }
 );
