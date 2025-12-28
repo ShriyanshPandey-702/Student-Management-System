@@ -1,19 +1,50 @@
 version: '3.8'
 
 services:
+  # MySQL Database
   db:
     image: mysql:8.0
     container_name: sms_db
     restart: unless-stopped
-    env_file:
-      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     ports:
       - "3306:3306"
     volumes:
-      # Mount the database folder so schema.sql is executed on first initialization
       - ./database:/docker-entrypoint-initdb.d:ro
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - sms_network
+
+  # Backend Application
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sms_backend
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      DB_USER: root
+      DB_PASS: ${MYSQL_ROOT_PASSWORD}
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sms_network
 
 volumes:
   db_data:
     name: sms_db_data
+
+networks:
+  sms_network:
+    driver: bridge

@@ -1,0 +1,48 @@
+# Docker ignore patterns
+.git
+.github
+.gitignore
+*.md
+LICENSE
+
+# Frontend build artifacts
+frontend/node_modules
+frontend/build
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production
+
+# Backend build artifacts (these will be built inside Docker)
+backend/target
+backend/.classpath
+backend/.project
+backend/.settings
+
+# IDE files
+.idea
+.vscode
+*.iml
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+
+# Environment files
+.env
+.env.local
+
+# Database data
+database/*.sql
+!database/schema.sql
+
+# Test files
+**/test/**
+**/*test*
+
+# Documentation (not needed in image)
+docs/
+*.md
+!README.md
