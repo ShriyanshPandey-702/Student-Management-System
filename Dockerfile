@@ -20,8 +20,11 @@ RUN rm -rf /usr/local/tomcat/webapps/*
 # Copy the built WAR file
 COPY --from=build /build/target/student-management.war /usr/local/tomcat/webapps/student-management.war
 
-# Expose port
-EXPOSE 8080
+# Set default port
+ENV PORT=10000
 
-# Start Tomcat
-CMD ["catalina.sh", "run"]
+# Expose port
+EXPOSE $PORT
+
+# Configure Tomcat to use the PORT environment variable
+CMD sed -i "s/8080/$PORT/g" /usr/local/tomcat/conf/server.xml && catalina.sh run
